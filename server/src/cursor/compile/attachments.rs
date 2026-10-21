@@ -113,9 +113,7 @@ async fn resolve(label: &str, source: Source<'_>, blobs: &BlobSynchronizer) -> R
     let data = match source {
         Source::Data(data) => data.to_vec(),
         Source::BlobId(raw_id) => fetch(label, raw_id, blobs).await?,
-        Source::BlobIdWithData { blob_id, data } if data.is_empty() => {
-            fetch(label, blob_id, blobs).await?
-        }
+        Source::BlobIdWithData { blob_id, data: [] } => fetch(label, blob_id, blobs).await?,
         Source::BlobIdWithData { blob_id, data } => {
             blobs
                 .cache_received(&BlobId::from_bytes(blob_id)?, data)
