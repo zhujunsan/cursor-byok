@@ -32,7 +32,7 @@ export type NetworkEventStream = {
 
 /**
  * 每次能力调用收到的宿主服务。网络请求仅限 plugin.json 声明的主机,协议须为 HTTPS
- * (回环地址 127.0.0.1 / localhost 例外,允许 HTTP);
+ * (localhost 与回环/私有网段/链路本地 IP 字面量例外,允许 HTTP);
  * 文件读取仅限 plugin.json `permissions.read` 声明的 `~/` 精确路径;
  * 宿主取消本次调用时通过 `signal` 中止。
  */

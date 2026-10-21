@@ -518,12 +518,12 @@ impl HostContext {
             .map_err(|error| Error::Config(format!("invalid plugin network URL: {error}")))?;
         let scheme_allowed = match url.scheme() {
             "https" => true,
-            "http" => crate::network::url_host_is_loopback(&url),
+            "http" => crate::network::url_host_is_local_network(&url),
             _ => false,
         };
         if !scheme_allowed || !url.username().is_empty() || url.password().is_some() {
             return Err(Error::Config(
-                "plugin network URL must be HTTPS (HTTP only for loopback hosts) without credentials"
+                "plugin network URL must be HTTPS (HTTP only for localhost and private-network IPs) without credentials"
                     .into(),
             ));
         }
@@ -842,12 +842,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn plugin_http_is_limited_to_allowed_loopback_hosts() {
+    async fn plugin_http_is_limited_to_local_network_hosts() {
         let (_directory, store, recorder) = recorder(false, "scheme-plugin").await;
         let mut host = host_with_recorder(store, recorder).await;
         host.network_hosts = Arc::new(HashSet::from([
             "127.0.0.1".into(),
             "localhost".into(),
+            "192.168.1.20".into(),
+            "10.0.0.5".into(),
+            "169.254.1.1".into(),
+            "8.8.8.8".into(),
+            "[fd00::1]".into(),
             "example.com".into(),
         ]));
         let request = |url: &str| {
@@ -860,6 +865,12 @@ mod tests {
         assert!(request("https://example.com/v1/models").await.is_ok());
         assert!(request("http://example.com/v1/models").await.is_err());
         assert!(request("http://localhost:64005/v1/models").await.is_ok());
+        assert!(request("http://192.168.1.20:8000/v1").await.is_ok());
+        assert!(request("http://10.0.0.5/v1").await.is_ok());
+        assert!(request("http://169.254.1.1/v1").await.is_ok());
+        assert!(request("http://[fd00::1]/v1").await.is_ok());
+        assert!(request("http://8.8.8.8/v1").await.is_err());
+        assert!(request("https://8.8.8.8/v1").await.is_ok());
         assert!(request("http://user:pass@127.0.0.1/v1").await.is_err());
         assert!(request("ftp://127.0.0.1/v1").await.is_err());
     }

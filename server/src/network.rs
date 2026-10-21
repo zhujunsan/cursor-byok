@@ -151,6 +151,20 @@ pub(crate) fn url_host_is_loopback(url: &url::Url) -> bool {
     }
 }
 
+/// 目标是本机或内网:`localhost` 与回环/私有/链路本地 IP 字面量。
+/// 其他域名不做判断,因为只有 DNS 解析后才能确认其落点。
+pub(crate) fn url_host_is_local_network(url: &url::Url) -> bool {
+    match url.host() {
+        Some(url::Host::Ipv4(address)) => {
+            address.is_loopback() || address.is_private() || address.is_link_local()
+        }
+        Some(url::Host::Ipv6(address)) => {
+            address.is_loopback() || address.is_unique_local() || address.is_unicast_link_local()
+        }
+        _ => url_host_is_loopback(url),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
