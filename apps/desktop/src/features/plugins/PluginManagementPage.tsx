@@ -75,7 +75,9 @@ export function PluginManagementPage() {
       fullHeight
       open={selectedPlugin !== null}
       title={selected?.mode === "settings"
-        ? t("{name} 账号管理", { name: selectedPlugin?.name ?? "" })
+        ? selectedPlugin?.resources.length
+          ? t("{name} 账号管理", { name: selectedPlugin.name })
+          : t("{name} 模型管理", { name: selectedPlugin?.name ?? "" })
         : t("添加 {name} 账号", { name: selectedPlugin?.name ?? "" })}
       onClose={() => setSelected(null)}
       onSubmit={() => setSelected(null)}
@@ -139,6 +141,7 @@ function PluginCard({ plugin, onOpen }: {
   const importInput = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const configured = plugin.providers.some((provider) => provider.configured);
+  const needsAccount = plugin.resources.length > 0;
   const accountCount = plugin.resources.reduce((count, resource) => count + resource.resources.length, 0);
   const modelCount = plugin.providers.reduce((count, provider) => count + provider.models.length, 0);
   const subtitle = plugin.providers.map((provider) => pluginText(provider.displayName, locale)).join(" · ") || plugin.id;
@@ -218,26 +221,27 @@ function PluginCard({ plugin, onOpen }: {
       </div>
       <div className={styles.pluginMeta}>
         <span>
-          {t("{accounts} 个账号 · {models} 个模型", {
-            accounts: accountCount,
-            models: modelCount,
-          })}
+          {needsAccount
+            ? t("{accounts} 个账号 · {models} 个模型", { accounts: accountCount, models: modelCount })
+            : t("{count} 个模型", { count: modelCount })}
         </span>
         {plugin.author && (
           <span className={styles.pluginAuthor}>{plugin.author}</span>
         )}
       </div>
       <div className={styles.cardActions}>
-        <TruncatedButton
-          size="small"
-          variant="primary"
-          label={t("添加账号")}
-          onClick={() => onOpen(plugin.id, "add")}
-        />
-        {configured && (
+        {needsAccount && (
           <TruncatedButton
             size="small"
-            label={t("账号管理")}
+            variant="primary"
+            label={t("添加账号")}
+            onClick={() => onOpen(plugin.id, "add")}
+          />
+        )}
+        {(configured || !needsAccount) && (
+          <TruncatedButton
+            size="small"
+            label={needsAccount ? t("账号管理") : t("模型管理")}
             onClick={() => onOpen(plugin.id, "settings")}
           />
         )}

@@ -7,6 +7,7 @@ function assert(condition: unknown, message: string): asserts condition {
 
 function context(requests: Array<{ url: string; body?: string }>): PluginContext {
   return {
+    file: { read: () => Promise.resolve(null) },
     network: {
       fetch: async (url, init = {}) => {
         requests.push({ url, body: init.body });

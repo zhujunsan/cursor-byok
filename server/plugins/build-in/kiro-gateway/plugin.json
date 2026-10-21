@@ -1,0 +1,20 @@
+{
+  "apiVersion": 1,
+  "id": "dev.cursorbyok.examples.kiro-gateway",
+  "name": "Kiro Gateway",
+  "version": "0.2.0",
+  "author": "@jwadow",
+  "minAppVersion": "0.1.0",
+  "icon": "assets/kiro.svg",
+  "entry": "main.ts",
+  "permissions": {
+    "network": [
+      "127.0.0.1"
+    ],
+    "read": [
+      "~/Library/Application Support/KiroGatewayTray/config.toml",
+      "~/.config/KiroGatewayTray/config.toml",
+      "~/AppData/Local/KiroGatewayTray/KiroGatewayTray/config.toml"
+    ]
+  }
+}

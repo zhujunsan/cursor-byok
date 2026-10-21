@@ -168,9 +168,33 @@ impl PluginRegistry {
         };
         let mut plugins = Vec::new();
         for entry in self.entries(&executable).await {
+            self.sync_standalone_models(&entry, &executable).await;
             plugins.push(self.descriptor(&entry, &executable).await);
         }
         plugins
+    }
+
+    /// 不依赖资源的 Provider(如读取本机托盘配置的插件)没有"添加账号"这一步,
+    /// 模型目录为空时在这里首次同步;失败只记日志,下次列出插件时重试。
+    async fn sync_standalone_models(&self, entry: &PluginEntry, executable: &Path) {
+        for provider in &entry.definition.providers {
+            if !provider.has_models || provider.resource_type.is_some() {
+                continue;
+            }
+            let synced = self
+                .inner
+                .state
+                .models(&entry.manifest.id, &provider.id)
+                .await
+                .map(|models| !models.is_empty())
+                .unwrap_or(false);
+            if synced {
+                continue;
+            }
+            if let Err(error) = self.sync_provider_models(entry, executable, provider).await {
+                tracing::debug!(plugin = %entry.manifest.id, provider = %provider.id, %error, "standalone plugin model sync failed");
+            }
+        }
     }
 
     /// 已满足调用条件的全部插件模型;每个模型独立进入 Cursor 目录。

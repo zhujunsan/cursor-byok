@@ -4,174 +4,47 @@ use std::path::Path;
 use super::definition::write_if_changed;
 use crate::Result;
 
-/// 随二进制打包的内置插件文件;发布构建没有源码目录,靠这里预装。
-const CODEX_AUTH: &[(&str, &str)] = &[
-    (
-        "plugin.json",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/plugin.json"
-        )),
-    ),
-    (
-        "main.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/main.ts"
-        )),
-    ),
-    (
-        "provider.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/provider.ts"
-        )),
-    ),
-    (
-        "models.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/models.ts"
-        )),
-    ),
-    (
-        "oauth.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/oauth.ts"
-        )),
-    ),
-    (
-        "resources.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/resources.ts"
-        )),
-    ),
-    (
-        "assets/codex.svg",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/codex-auth/assets/codex.svg"
-        )),
-    ),
-];
+/// 把 `plugins/build-in/<dir>/` 下列出的文件嵌入二进制;发布构建没有源码目录,靠这里预装。
+macro_rules! bundled {
+    ($dir:literal: $($file:literal),+ $(,)?) => {
+        &[$((
+            $file,
+            include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/plugins/build-in/",
+                $dir,
+                "/",
+                $file
+            )),
+        )),+]
+    };
+}
 
-const GROK_AUTH: &[(&str, &str)] = &[
-    (
-        "plugin.json",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/plugin.json"
-        )),
-    ),
-    (
-        "main.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/main.ts"
-        )),
-    ),
-    (
-        "provider.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/provider.ts"
-        )),
-    ),
-    (
-        "models.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/models.ts"
-        )),
-    ),
-    (
-        "oauth.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/oauth.ts"
-        )),
-    ),
-    (
-        "resources.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/resources.ts"
-        )),
-    ),
-    (
-        "assets/grok.svg",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/grok-auth/assets/grok.svg"
-        )),
-    ),
-];
+const CODEX_AUTH: &[(&str, &str)] = bundled!(
+    "codex-auth": "plugin.json", "main.ts", "provider.ts", "models.ts", "oauth.ts",
+    "resources.ts", "assets/codex.svg",
+);
 
-const ANTIGRAVITY_AUTH: &[(&str, &str)] = &[
-    (
-        "plugin.json",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/plugin.json"
-        )),
-    ),
-    (
-        "main.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/main.ts"
-        )),
-    ),
-    (
-        "provider.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/provider.ts"
-        )),
-    ),
-    (
-        "models.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/models.ts"
-        )),
-    ),
-    (
-        "oauth.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/oauth.ts"
-        )),
-    ),
-    (
-        "google_oauth.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/google_oauth.ts"
-        )),
-    ),
-    (
-        "resources.ts",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/resources.ts"
-        )),
-    ),
-    (
-        "assets/antigravity.svg",
-        include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/plugins/build-in/antigravity-auth/assets/antigravity.svg"
-        )),
-    ),
-];
+const GROK_AUTH: &[(&str, &str)] = bundled!(
+    "grok-auth": "plugin.json", "main.ts", "provider.ts", "models.ts", "oauth.ts",
+    "resources.ts", "assets/grok.svg",
+);
+
+const ANTIGRAVITY_AUTH: &[(&str, &str)] = bundled!(
+    "antigravity-auth": "plugin.json", "main.ts", "provider.ts", "models.ts", "oauth.ts",
+    "google_oauth.ts", "resources.ts", "assets/antigravity.svg",
+);
+
+const KIRO_GATEWAY: &[(&str, &str)] = bundled!(
+    "kiro-gateway": "plugin.json", "main.ts", "provider.ts", "models.ts", "config.ts",
+    "assets/kiro.svg",
+);
 
 const PLUGINS: &[(&str, &[(&str, &str)])] = &[
     ("codex-auth", CODEX_AUTH),
     ("grok-auth", GROK_AUTH),
     ("antigravity-auth", ANTIGRAVITY_AUTH),
+    ("kiro-gateway", KIRO_GATEWAY),
 ];
 
 /// 把内置插件预装到 installed 目录。manifest 的 version 是缓存键:
@@ -276,6 +149,7 @@ mod tests {
             .path()
             .join("antigravity-auth/assets/antigravity.svg")
             .is_file());
+        assert!(root.path().join("kiro-gateway/config.ts").is_file());
 
         // 版本一致:本地改动与额外文件保持原样,不发生任何写盘。
         std::fs::write(plugin.join("main.ts"), "edited").unwrap();

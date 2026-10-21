@@ -27,6 +27,7 @@ use crate::{provider::CallRecorder, store::Store, Error, Result};
 const INVOCATION_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const MAX_NETWORK_RESPONSE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_STREAM_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_READ_FILE_BYTES: u64 = 1024 * 1024;
 
 /// 一次流式调用的输出:零或多个事件,然后恰好一个最终结果。
 #[derive(Debug)]
@@ -80,6 +81,8 @@ impl InvocationState {
 struct HostContext {
     plugin_id: String,
     network_hosts: Arc<HashSet<String>>,
+    /// plugin.json 声明的 `~/` 相对只读路径,按原文精确匹配。
+    read_paths: Arc<HashSet<String>>,
     store: Store,
     invocations: Arc<Mutex<HashMap<String, Arc<InvocationState>>>>,
     streams: Arc<Mutex<HashMap<String, StreamLines>>>,
@@ -105,6 +108,9 @@ impl PluginWorker {
                             .iter()
                             .map(|host| host.to_ascii_lowercase())
                             .collect(),
+                    ),
+                    read_paths: Arc::new(
+                        plugin.manifest.permissions.read.iter().cloned().collect(),
                     ),
                     store,
                     invocations: Arc::new(Mutex::new(HashMap::new())),
@@ -448,6 +454,7 @@ impl HostContext {
         params: serde_json::Value,
     ) -> Result<serde_json::Value> {
         match method {
+            "file.read" => self.read_file(&params).await,
             "network.fetch" => self.fetch(request_id, params).await,
             "network.stream.open" => self.stream_open(request_id, params).await,
             "network.stream.read" => self.stream_read(params).await,
@@ -464,6 +471,39 @@ impl HostContext {
         }
     }
 
+    /// 读取 plugin.json `permissions.read` 声明的单个文件;文件不存在返回 null。
+    async fn read_file(&self, params: &serde_json::Value) -> Result<serde_json::Value> {
+        let path = required_string(params, "path")?;
+        if !self.read_paths.contains(path) {
+            return Err(Error::Config(format!(
+                "plugin '{}' cannot read '{path}'",
+                self.plugin_id
+            )));
+        }
+        let relative = path
+            .strip_prefix("~/")
+            .ok_or_else(|| Error::Config(format!("invalid plugin read path: {path}")))?;
+        let home = dirs::home_dir()
+            .ok_or_else(|| Error::Config("cannot resolve user home directory".into()))?;
+        let file = home.join(relative);
+        let metadata = match tokio::fs::metadata(&file).await {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(serde_json::Value::Null)
+            }
+            Err(error) => return Err(error.into()),
+        };
+        if !metadata.is_file() || metadata.len() > MAX_READ_FILE_BYTES {
+            return Err(Error::Config(format!(
+                "plugin read path is not a regular file within {MAX_READ_FILE_BYTES} bytes: {path}"
+            )));
+        }
+        let bytes = tokio::fs::read(&file).await?;
+        Ok(serde_json::Value::String(
+            String::from_utf8_lossy(&bytes).into_owned(),
+        ))
+    }
+
     async fn request(
         &self,
         request_id: &str,
@@ -476,9 +516,15 @@ impl HostContext {
         let raw_url = required_string(params, "url")?;
         let url = url::Url::parse(raw_url)
             .map_err(|error| Error::Config(format!("invalid plugin network URL: {error}")))?;
-        if url.scheme() != "https" || !url.username().is_empty() || url.password().is_some() {
+        let scheme_allowed = match url.scheme() {
+            "https" => true,
+            "http" => crate::network::url_host_is_loopback(&url),
+            _ => false,
+        };
+        if !scheme_allowed || !url.username().is_empty() || url.password().is_some() {
             return Err(Error::Config(
-                "plugin network URL must be HTTPS without credentials".into(),
+                "plugin network URL must be HTTPS (HTTP only for loopback hosts) without credentials"
+                    .into(),
             ));
         }
         let host = url
@@ -788,10 +834,53 @@ mod tests {
         HostContext {
             plugin_id: "test".into(),
             network_hosts: Arc::new(HashSet::from(["example.com".into()])),
+            read_paths: Arc::new(HashSet::from(["~/.cursor-byok-missing-test-file".into()])),
             store,
             invocations,
             streams: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    #[tokio::test]
+    async fn plugin_http_is_limited_to_allowed_loopback_hosts() {
+        let (_directory, store, recorder) = recorder(false, "scheme-plugin").await;
+        let mut host = host_with_recorder(store, recorder).await;
+        host.network_hosts = Arc::new(HashSet::from([
+            "127.0.0.1".into(),
+            "localhost".into(),
+            "example.com".into(),
+        ]));
+        let request = |url: &str| {
+            let host = host.clone();
+            let params = serde_json::json!({ "url": url });
+            async move { host.request("missing", &params).await.map(|_| ()) }
+        };
+
+        assert!(request("http://127.0.0.1:64005/v1/models").await.is_ok());
+        assert!(request("https://example.com/v1/models").await.is_ok());
+        assert!(request("http://example.com/v1/models").await.is_err());
+        assert!(request("http://localhost:64005/v1/models").await.is_ok());
+        assert!(request("http://user:pass@127.0.0.1/v1").await.is_err());
+        assert!(request("ftp://127.0.0.1/v1").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn plugin_file_reads_require_a_declared_exact_path() {
+        let (_directory, store, recorder) = recorder(false, "read-plugin").await;
+        let host = host_with_recorder(store, recorder).await;
+        let read = |path: &str| {
+            let host = host.clone();
+            let params = serde_json::json!({ "path": path });
+            async move { host.call("missing", "file.read", params).await }
+        };
+
+        assert_eq!(
+            read("~/.cursor-byok-missing-test-file").await.unwrap(),
+            serde_json::Value::Null
+        );
+        assert!(read("~/.ssh/id_ed25519").await.is_err());
+        assert!(read("~/.cursor-byok-missing-test-file/../x").await.is_err());
+        assert!(read("/etc/passwd").await.is_err());
     }
 
     #[test]

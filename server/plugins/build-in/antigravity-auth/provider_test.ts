@@ -25,6 +25,7 @@ type StreamHandler = (url: string, init?: RequestInit) => NetworkEventStream;
 
 function context(handlers: { fetch?: FetchHandler; stream?: StreamHandler }): PluginContext {
   return {
+    file: { read: () => Promise.resolve(null) },
     network: {
       fetch: (url, init) => {
         if (!handlers.fetch) throw new Error("fetch was not expected");

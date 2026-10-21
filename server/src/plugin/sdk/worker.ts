@@ -44,6 +44,9 @@ async function* streamLines(requestId: string, streamId: string): AsyncGenerator
 
 function contextFor(requestId: string, signal: AbortSignal): PluginContext {
   return {
+    file: {
+      read: (path) => hostCall(requestId, "file.read", { path }) as Promise<string | null>,
+    },
     network: {
       fetch: (url, init = {}) => hostCall(requestId, "network.fetch", { url, ...init }) as ReturnType<PluginContext["network"]["fetch"]>,
       stream: async (url, init = {}): Promise<NetworkEventStream> => {

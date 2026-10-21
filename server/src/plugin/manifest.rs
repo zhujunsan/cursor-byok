@@ -32,6 +32,9 @@ pub struct PluginManifest {
 pub struct PluginPermissions {
     #[serde(default)]
     pub network: Vec<String>,
+    /// 允许只读访问的本机文件,必须是 `~/` 开头的精确路径(不支持通配)。
+    #[serde(default)]
+    pub read: Vec<String>,
 }
 
 impl PluginManifest {
@@ -58,6 +61,16 @@ impl PluginManifest {
             if !hosts.insert(host.to_ascii_lowercase()) {
                 return Err(Error::Config(format!(
                     "plugin '{}' contains duplicate network host '{host}'",
+                    self.id
+                )));
+            }
+        }
+        let mut paths = HashSet::new();
+        for path in &self.permissions.read {
+            validate_read_path(path)?;
+            if !paths.insert(path.as_str()) {
+                return Err(Error::Config(format!(
+                    "plugin '{}' contains duplicate read path '{path}'",
                     self.id
                 )));
             }
@@ -113,6 +126,22 @@ fn validate_network_host(value: &str) -> Result<()> {
         )));
     }
     Ok(())
+}
+
+/// 读权限只接受 `~/` 之后由普通路径段组成的相对路径,拒绝 `..` 与绝对路径。
+fn validate_read_path(value: &str) -> Result<()> {
+    let relative = value
+        .strip_prefix("~/")
+        .filter(|relative| !relative.is_empty() && !relative.contains('\\'))
+        .ok_or_else(|| Error::Config(format!("invalid plugin read path: {value}")))?;
+    if relative
+        .split('/')
+        .all(|segment| !matches!(segment, "" | "." | ".."))
+    {
+        Ok(())
+    } else {
+        Err(Error::Config(format!("invalid plugin read path: {value}")))
+    }
 }
 
 fn required<'a>(value: &'a str, label: &str) -> Result<&'a str> {
@@ -199,6 +228,22 @@ mod tests {
         assert!(validate_network_host("https://example.com").is_err());
         assert!(validate_network_host("example.com:443").is_err());
         assert!(validate_network_host("example.com").is_ok());
+    }
+
+    #[test]
+    fn read_permissions_are_exact_home_relative_paths() {
+        assert!(validate_read_path("~/Library/Application Support/Tray/config.toml").is_ok());
+        for invalid in [
+            "",
+            "~/",
+            "/etc/passwd",
+            "config.toml",
+            "~/../secrets",
+            "~/a/./b",
+            "~/a\\b",
+        ] {
+            assert!(validate_read_path(invalid).is_err(), "{invalid}");
+        }
     }
 
     #[test]

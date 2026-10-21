@@ -140,7 +140,7 @@ pub fn reject_self_proxy(address: &str, local_proxy_port: u16) -> Result<()> {
     Ok(())
 }
 
-fn url_host_is_loopback(url: &url::Url) -> bool {
+pub(crate) fn url_host_is_loopback(url: &url::Url) -> bool {
     match url.host() {
         Some(url::Host::Domain(host)) => {
             host.trim_end_matches('.').eq_ignore_ascii_case("localhost")

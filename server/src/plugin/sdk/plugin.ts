@@ -31,10 +31,16 @@ export type NetworkEventStream = {
 };
 
 /**
- * 每次能力调用收到的宿主服务。网络请求仅限 plugin.json 声明的 HTTPS 主机;
+ * 每次能力调用收到的宿主服务。网络请求仅限 plugin.json 声明的主机,协议须为 HTTPS
+ * (回环地址 127.0.0.1 / localhost 例外,允许 HTTP);
+ * 文件读取仅限 plugin.json `permissions.read` 声明的 `~/` 精确路径;
  * 宿主取消本次调用时通过 `signal` 中止。
  */
 export type PluginContext = {
+  file: {
+    /** 读取已声明的只读文件(UTF-8,上限 1 MiB);文件不存在返回 null。 */
+    read(path: string): Promise<string | null>;
+  };
   network: {
     fetch(url: string, init?: NetworkRequestInit): Promise<NetworkResponse>;
     stream(url: string, init?: NetworkRequestInit): Promise<NetworkEventStream>;
