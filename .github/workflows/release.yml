@@ -90,7 +90,7 @@ jobs:
             args: ""
             target: ""
           - platform: windows-x86_64
-            os: windows-latest
+            os: windows-2025
             args: "--bundles nsis"
             target: ""
           - platform: macos-aarch64

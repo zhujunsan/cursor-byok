@@ -70,8 +70,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - windows-latest
-          - macos-latest
+          - windows-2025
+          - macos-15
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
