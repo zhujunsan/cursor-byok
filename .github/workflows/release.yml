@@ -15,7 +15,7 @@ concurrency:
 jobs:
   prepare:
     name: Prepare release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_publish: ${{ steps.release.outputs.should_publish }}
       version: ${{ steps.version.outputs.version }}
@@ -197,7 +197,7 @@ jobs:
     name: Publish GitHub Release
     needs: [prepare, publish]
     if: needs.prepare.outputs.should_publish == 'true' && needs.publish.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
