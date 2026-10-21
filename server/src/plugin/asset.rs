@@ -18,10 +18,6 @@ impl RuntimeAsset {
                 "aarch64-apple-darwin",
                 "213a2f304f04d3c9cb5220669afad138f60a5aab1fe80962abdeb8f35807a472",
             ),
-            ("macos", "x86_64") => (
-                "x86_64-apple-darwin",
-                "7d4524b82bcc557fe020a1a5b56956ed42b992ae5b28026e8ad5d17329533f5f",
-            ),
             ("windows", "aarch64") => (
                 "aarch64-pc-windows-msvc",
                 "acb014afe2299847764e232b4993e162e3946cdeec36603e3f1a0b548cd1ea55",
@@ -71,7 +67,6 @@ mod tests {
     fn maps_every_supported_desktop_target() {
         let cases = [
             ("macos", "aarch64", "aarch64-apple-darwin"),
-            ("macos", "x86_64", "x86_64-apple-darwin"),
             ("windows", "aarch64", "aarch64-pc-windows-msvc"),
             ("windows", "x86_64", "x86_64-pc-windows-msvc"),
             ("linux", "aarch64", "aarch64-unknown-linux-gnu"),

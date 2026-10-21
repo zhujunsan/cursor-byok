@@ -16,9 +16,9 @@ concurrency:
 jobs:
   rust:
     name: Rust (Linux)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The workspace includes apps/desktop/src-tauri, so even `cargo check`
       # needs the same system libraries the release workflow installs.
@@ -46,11 +46,11 @@ jobs:
 
   frontend:
     name: Frontend
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -74,7 +74,7 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:

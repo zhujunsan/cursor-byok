@@ -20,7 +20,7 @@ jobs:
       should_publish: ${{ steps.release.outputs.should_publish }}
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -86,7 +86,7 @@ jobs:
       matrix:
         include:
           - platform: linux-x86_64
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             args: ""
             target: ""
           - platform: windows-x86_64
@@ -97,15 +97,11 @@ jobs:
             os: macos-15
             args: "--target aarch64-apple-darwin"
             target: aarch64-apple-darwin
-          - platform: macos-x86_64
-            os: macos-15-intel
-            args: "--target x86_64-apple-darwin"
-            target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Linux system dependencies
         if: matrix.platform == 'linux-x86_64'
@@ -123,7 +119,7 @@ jobs:
         with:
           workspaces: ". -> target"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -189,13 +185,9 @@ jobs:
           mkdir -p legacy-update
           archive=$(find "target/${{ matrix.target }}/release/bundle/macos" -maxdepth 1 -name '*.app.tar.gz' -print -quit)
           test -n "${archive}"
-          legacy_platform=macos-arm64
-          if [[ "${{ matrix.platform }}" = "macos-x86_64" ]]; then
-            legacy_platform=macos-amd64
-          fi
-          cp "${archive}" "legacy-update/cursor-byok-${VERSION}-${legacy_platform}.tar.gz"
+          cp "${archive}" "legacy-update/cursor-byok-${VERSION}-macos-arm64.tar.gz"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: legacy-update-${{ matrix.platform }}
           path: legacy-update/*
@@ -207,9 +199,9 @@ jobs:
     if: needs.prepare.outputs.should_publish == 'true' && needs.publish.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: legacy-update-*
           path: legacy-update

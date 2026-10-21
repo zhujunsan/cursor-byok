@@ -4,7 +4,6 @@ import { basename, join, resolve } from "node:path";
 
 const assetSpecs = [
   ["macos-arm64", ".tar.gz"],
-  ["macos-amd64", ".tar.gz"],
   ["windows-amd64", ".zip"],
   ["linux-amd64", ".tar.gz"],
 ];
