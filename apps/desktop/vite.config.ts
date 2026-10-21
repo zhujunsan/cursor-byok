@@ -8,6 +8,10 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(async ({ command }) => ({
   base: "/__byok-api__/",
+  define: {
+    // Shown next to the app version so local builds with the same version stay distinguishable.
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     staticI18nPlugin(),
     ...(command === "serve"

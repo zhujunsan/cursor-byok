@@ -18,6 +18,13 @@ export async function currentAppVersion(): Promise<string> {
   return hasNativeAppLifecycle() ? getVersion() : "dev";
 }
 
+/** Local build time as `YYYY-MM-DD HH:mm`. */
+export function appBuildTime(): string {
+  const date = new Date(__BUILD_TIME__);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export async function readAutostart(): Promise<boolean> {
   return isEnabled();
 }

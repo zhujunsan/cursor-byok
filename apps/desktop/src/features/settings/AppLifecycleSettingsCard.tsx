@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  appBuildTime,
   currentAppVersion,
   hasDockVisibilitySetting,
   hasNativeAppLifecycle,
@@ -151,7 +152,7 @@ export function AppLifecycleSettingsCard() {
         <strong>{t("软件更新")}</strong>
         <small>{availableVersion
           ? t("版本 {version} 可以安装", { version: availableVersion })
-          : t("当前版本 {version}", { version })}</small>
+          : t("当前版本 {version} · 编译于 {buildTime}", { version, buildTime: appBuildTime() })}</small>
       </div>
       {availableVersion
         ? <Button size="small" variant="primary" disabled={installing} onClick={() => void updateNow()}>

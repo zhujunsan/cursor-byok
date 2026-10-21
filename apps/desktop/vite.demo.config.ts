@@ -11,6 +11,9 @@ export default defineConfig({
   root: desktopRoot,
   base: "/product-demo/",
   plugins: [staticI18nPlugin(), react()],
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   publicDir: false,
   build: {
     outDir: demoOutput,

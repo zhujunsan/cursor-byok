@@ -684,7 +684,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 158,
+          "line": 159,
           "column": 27
         }
       ]
@@ -983,7 +983,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 96,
+          "line": 97,
           "column": 29
         }
       ]
@@ -1023,20 +1023,6 @@
           "file": "features/models/CursorModelEditor.tsx",
           "line": 159,
           "column": 42
-        }
-      ]
-    },
-    "29585d7193539200": {
-      "source": "当前版本 {version}",
-      "kind": "template",
-      "placeholders": [
-        "version"
-      ],
-      "refs": [
-        {
-          "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 154,
-          "column": 13
         }
       ]
     },
@@ -1614,7 +1600,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 85,
+          "line": 86,
           "column": 45
         }
       ]
@@ -1861,7 +1847,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 128,
+          "line": 129,
           "column": 17
         }
       ]
@@ -1913,7 +1899,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 153,
+          "line": 154,
           "column": 13
         }
       ]
@@ -2487,7 +2473,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 59,
+          "line": 60,
           "column": 40
         }
       ]
@@ -2705,7 +2691,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 151,
+          "line": 152,
           "column": 18
         }
       ]
@@ -2803,12 +2789,12 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 139,
+          "line": 140,
           "column": 18
         },
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 145,
+          "line": 146,
           "column": 16
         }
       ]
@@ -2929,7 +2915,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 96,
+          "line": 97,
           "column": 78
         }
       ]
@@ -3171,7 +3157,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 162,
+          "line": 163,
           "column": 37
         }
       ]
@@ -3276,12 +3262,12 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 115,
+          "line": 116,
           "column": 18
         },
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 121,
+          "line": 122,
           "column": 16
         }
       ]
@@ -3334,7 +3320,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 72,
+          "line": 73,
           "column": 25
         }
       ]
@@ -3599,6 +3585,21 @@
         }
       ]
     },
+    "927da20124ba9fd0": {
+      "source": "当前版本 {version} · 编译于 {buildTime}",
+      "kind": "template",
+      "placeholders": [
+        "version",
+        "buildTime"
+      ],
+      "refs": [
+        {
+          "file": "features/settings/AppLifecycleSettingsCard.tsx",
+          "line": 155,
+          "column": 13
+        }
+      ]
+    },
     "92e26b27d5ea8f0e": {
       "source": "检查更新失败：{error}",
       "kind": "template",
@@ -3608,7 +3609,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 99,
+          "line": 100,
           "column": 15
         }
       ]
@@ -3849,7 +3850,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 72,
+          "line": 73,
           "column": 40
         }
       ]
@@ -4016,7 +4017,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 112,
+          "line": 113,
           "column": 29
         }
       ]
@@ -4028,12 +4029,12 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 127,
+          "line": 128,
           "column": 18
         },
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 133,
+          "line": 134,
           "column": 16
         }
       ]
@@ -4274,7 +4275,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 108,
+          "line": 109,
           "column": 15
         }
       ]
@@ -4325,7 +4326,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 59,
+          "line": 60,
           "column": 25
         }
       ]
@@ -4349,7 +4350,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 158,
+          "line": 159,
           "column": 39
         }
       ]
@@ -4389,7 +4390,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 140,
+          "line": 141,
           "column": 17
         }
       ]
@@ -4592,7 +4593,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 85,
+          "line": 86,
           "column": 25
         }
       ]
@@ -5180,7 +5181,7 @@
       "refs": [
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 116,
+          "line": 117,
           "column": 17
         }
       ]
@@ -6273,7 +6274,7 @@
         },
         {
           "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 162,
+          "line": 163,
           "column": 25
         }
       ]
