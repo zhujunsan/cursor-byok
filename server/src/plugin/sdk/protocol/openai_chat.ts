@@ -39,12 +39,22 @@ function chatContent(parts: LlmContentPart[]): JsonValue {
   if (parts.every((part) => part.type === "text")) {
     return parts.map((part) => part.type === "text" ? part.text : "").join("");
   }
-  return parts.map((part): JsonValue =>
-    part.type === "text" ? { type: "text", text: part.text } : {
+  return parts.map((part): JsonValue => {
+    if (part.type === "text") return { type: "text", text: part.text };
+    if (part.type === "document") {
+      return {
+        type: "file",
+        file: {
+          filename: part.filename,
+          file_data: `data:${part.mediaType};base64,${part.dataBase64}`,
+        },
+      };
+    }
+    return {
       type: "image_url",
       image_url: { url: `data:${part.mediaType};base64,${part.dataBase64}` },
-    }
-  );
+    };
+  });
 }
 
 export function buildChatBody(call: OpenAiChatCall): Record<string, JsonValue> {

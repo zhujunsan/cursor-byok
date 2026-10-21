@@ -486,6 +486,15 @@ fn responses_content(parts: &[ContentPart], text_type: &str) -> Result<Vec<Value
                 "detail":"auto",
                 "image_url":format!("data:{mime_type};base64,{}", STANDARD.encode(data)),
             }))),
+            ContentPart::Document {
+                mime_type,
+                filename,
+                data,
+            } => Some(Ok(json!({
+                "type":"input_file",
+                "filename":filename,
+                "file_data":format!("data:{mime_type};base64,{}", STANDARD.encode(data)),
+            }))),
         })
         .collect()
 }
@@ -543,6 +552,27 @@ pub(crate) fn responses_usage(value: &Value) -> Usage {
 mod tests {
     use super::*;
     use crate::model::ProviderReplayState;
+
+    #[test]
+    fn pdf_document_becomes_an_input_file() {
+        let content = responses_content(
+            &[ContentPart::Document {
+                mime_type: "application/pdf".into(),
+                filename: "a.pdf".into(),
+                data: vec![1, 2, 3],
+            }],
+            "input_text",
+        )
+        .unwrap();
+        assert_eq!(
+            content,
+            vec![json!({
+                "type":"input_file",
+                "filename":"a.pdf",
+                "file_data":"data:application/pdf;base64,AQID",
+            })]
+        );
+    }
 
     #[test]
     fn reasoning_replay_projects_response_items_to_valid_input_items() {

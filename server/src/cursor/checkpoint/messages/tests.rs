@@ -190,6 +190,36 @@ fn cursor_user_image_uses_image_field() {
 }
 
 #[test]
+fn cursor_user_file_round_trips_as_document() {
+    let wire = json!({
+        "role": "user",
+        "id": "user-file",
+        "content": [
+            {"type":"text", "text":"read"},
+            {"type":"file", "data":"AQID", "mimeType":"application/pdf", "filename":"a.pdf"},
+        ],
+    });
+    let message = decode(
+        serde_json::to_vec(&wire).unwrap().as_slice(),
+        "cursor-root:user-file".into(),
+    )
+    .unwrap();
+    assert!(matches!(
+        &message.content,
+        MessageContent::Parts { parts }
+            if parts[1] == ContentPart::Document {
+                mime_type: "application/pdf".into(),
+                filename: "a.pdf".into(),
+                data: vec![1, 2, 3],
+            }
+    ));
+
+    let projected = project_messages(&[message]).unwrap();
+    let encoded = wire_message(&projected[0], "model", None).unwrap();
+    assert_eq!(encoded["content"][1], wire["content"][1]);
+}
+
+#[test]
 fn repeated_cursor_wire_ids_do_not_merge_distinct_tool_rounds() {
     fn assistant(call_id: &str, internal_id: &str) -> CanonicalMessage {
         let wire = json!({

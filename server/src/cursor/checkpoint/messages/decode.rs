@@ -156,6 +156,16 @@ fn decode_text(value: &Value) -> Result<MessageContent> {
                     })?,
                 })
             }
+            Some("file") => {
+                let encoded = required_string(part, "data")?;
+                Ok(ContentPart::Document {
+                    mime_type: required_string(part, "mimeType")?.into(),
+                    filename: required_string(part, "filename")?.into(),
+                    data: STANDARD.decode(encoded).map_err(|error| {
+                        Error::Protocol(format!("invalid Cursor file base64: {error}"))
+                    })?,
+                })
+            }
             Some(kind) => Err(Error::Protocol(format!(
                 "unsupported Cursor message content part: {kind}"
             ))),

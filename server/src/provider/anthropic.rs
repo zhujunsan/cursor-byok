@@ -413,7 +413,7 @@ fn mark_cache_breakpoint(messages: &mut [Value]) {
     };
     for block in content.iter_mut().rev() {
         let kind = block.get("type").and_then(Value::as_str);
-        if !matches!(kind, Some("text" | "image" | "tool_result")) {
+        if !matches!(kind, Some("text" | "image" | "document" | "tool_result")) {
             continue;
         }
         if let Some(block) = block.as_object_mut() {
@@ -439,6 +439,22 @@ fn anthropic_parts(role: &Role, parts: &[ContentPart]) -> Result<Vec<Value>> {
             }))),
             ContentPart::Image { .. } => Some(Err(Error::Protocol(
                 "Anthropic only accepts images in user messages".into(),
+            ))),
+            ContentPart::Document {
+                mime_type,
+                filename,
+                data,
+            } if *role == Role::User => Some(Ok(json!({
+                "type":"document",
+                "title":filename,
+                "source":{
+                    "type":"base64",
+                    "media_type":mime_type,
+                    "data":STANDARD.encode(data),
+                },
+            }))),
+            ContentPart::Document { .. } => Some(Err(Error::Protocol(
+                "Anthropic only accepts documents in user messages".into(),
             ))),
         })
         .collect()
@@ -505,6 +521,24 @@ pub(crate) fn anthropic_usage(value: &Value) -> Usage {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pdf_document_becomes_a_base64_document_block() {
+        let part = ContentPart::Document {
+            mime_type: "application/pdf".into(),
+            filename: "a.pdf".into(),
+            data: vec![1, 2, 3],
+        };
+        assert_eq!(
+            anthropic_parts(&Role::User, std::slice::from_ref(&part)).unwrap(),
+            vec![json!({
+                "type":"document",
+                "title":"a.pdf",
+                "source":{"type":"base64","media_type":"application/pdf","data":"AQID"},
+            })]
+        );
+        assert!(anthropic_parts(&Role::Assistant, &[part]).is_err());
+    }
 
     #[test]
     fn cached_tokens_are_included_once_in_anthropic_context_input() {

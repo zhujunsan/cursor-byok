@@ -8,7 +8,8 @@ import type { ResourcePatch, ResourceSnapshot } from "./resource.ts";
  */
 export type LlmContentPart =
   | { type: "text"; text: string }
-  | { type: "image"; mediaType: string; dataBase64: string };
+  | { type: "image"; mediaType: string; dataBase64: string }
+  | { type: "document"; mediaType: string; filename: string; dataBase64: string };
 
 /** 不透明的 Provider 回放状态(如加密推理项);回放时按 providerKind 过滤。 */
 export type LlmReplayState = {

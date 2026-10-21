@@ -7,6 +7,7 @@ use std::{
 use prost::Message;
 use serde_json::Value;
 
+use super::attachments;
 use crate::{
     cursor::{
         protocol::proto::agent::v1 as pb, services::context_sync::RequestContextSynchronizer,
@@ -434,6 +435,14 @@ pub fn selected_context(user: &pb::UserMessage) -> Option<String> {
             "<terminal_selection title=\"{}\">\n{}\n</terminal_selection>",
             value.title.as_deref().unwrap_or_default(),
             value.content
+        )
+    }));
+    sections.extend(selected.selected_documents.iter().map(|value| {
+        format!(
+            "<document filename=\"{}\" path=\"{}\" mime_type=\"{}\"/>",
+            attachments::document_filename(value),
+            value.path,
+            value.mime_type
         )
     }));
     sections.extend(selected.cursor_rules.iter().filter_map(|value| {

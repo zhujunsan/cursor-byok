@@ -315,7 +315,7 @@ fn chat_content(_role: &Role, parts: &[ContentPart]) -> Result<Value> {
     for part in parts {
         match part {
             ContentPart::Text { text: part } => text.push_str(part),
-            ContentPart::Image { .. } => {
+            ContentPart::Image { .. } | ContentPart::Document { .. } => {
                 only_text = false;
                 break;
             }
@@ -335,6 +335,17 @@ fn chat_content(_role: &Role, parts: &[ContentPart]) -> Result<Value> {
                         "data:{mime_type};base64,{}",
                         STANDARD.encode(data)
                     )},
+                })),
+                ContentPart::Document {
+                    mime_type,
+                    filename,
+                    data,
+                } => Ok(json!({
+                    "type":"file",
+                    "file":{
+                        "filename":filename,
+                        "file_data":format!("data:{mime_type};base64,{}", STANDARD.encode(data)),
+                    },
                 })),
             })
             .collect::<Result<Vec<_>>>()?,
@@ -439,6 +450,34 @@ pub(crate) fn openai_usage(value: &Value) -> Usage {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pdf_document_becomes_a_file_part() {
+        let content = chat_content(
+            &Role::User,
+            &[
+                ContentPart::Text {
+                    text: "read".into(),
+                },
+                ContentPart::Document {
+                    mime_type: "application/pdf".into(),
+                    filename: "a.pdf".into(),
+                    data: vec![1, 2, 3],
+                },
+            ],
+        )
+        .unwrap();
+        assert_eq!(
+            content,
+            json!([
+                {"type":"text","text":"read"},
+                {"type":"file","file":{
+                    "filename":"a.pdf",
+                    "file_data":"data:application/pdf;base64,AQID",
+                }},
+            ])
+        );
+    }
 
     #[test]
     fn observed_tool_calls_outrank_ordinary_stop_reasons() {

@@ -1,9 +1,9 @@
 //! Compiles Cursor requests and actions into provider-independent Run inputs.
 
 mod action;
+mod attachments;
 mod break_messages;
 mod context;
-mod images;
 mod insert_messages;
 mod model;
 mod run;

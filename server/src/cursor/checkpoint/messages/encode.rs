@@ -205,6 +205,16 @@ fn wire_content(content: &ProjectedContent, model: &str) -> Result<Value> {
                         "image": STANDARD.encode(data),
                         "mimeType": mime_type,
                     }),
+                    ContentPart::Document {
+                        mime_type,
+                        filename,
+                        data,
+                    } => json!({
+                        "type":"file",
+                        "data": STANDARD.encode(data),
+                        "mimeType": mime_type,
+                        "filename": filename,
+                    }),
                 })
                 .collect(),
         ),

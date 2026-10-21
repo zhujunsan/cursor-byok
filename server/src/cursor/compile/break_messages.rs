@@ -15,7 +15,7 @@ use crate::{
     Error, Result,
 };
 
-use super::{context, images};
+use super::{attachments, context};
 
 pub(crate) enum RuntimeAction {
     Inject(pb::InjectContextAction),
@@ -294,7 +294,7 @@ async fn message(
         role: Role::User,
         origin: Origin::Runtime,
         content: MessageContent::Parts {
-            parts: images::parts(user, text, blobs).await?,
+            parts: attachments::parts(user, text, blobs).await?,
         },
         runtime_event_id: Some(event_id),
     })

@@ -99,6 +99,16 @@ fn wire_parts(parts: &[ContentPart]) -> Vec<serde_json::Value> {
                 "mediaType": mime_type,
                 "dataBase64": STANDARD.encode(data),
             }),
+            ContentPart::Document {
+                mime_type,
+                filename,
+                data,
+            } => serde_json::json!({
+                "type": "document",
+                "mediaType": mime_type,
+                "filename": filename,
+                "dataBase64": STANDARD.encode(data),
+            }),
         })
         .collect()
 }
@@ -108,7 +118,7 @@ fn joined_text(parts: &[ContentPart]) -> String {
         .iter()
         .filter_map(|part| match part {
             ContentPart::Text { text } => Some(text.as_str()),
-            ContentPart::Image { .. } => None,
+            ContentPart::Image { .. } | ContentPart::Document { .. } => None,
         })
         .collect()
 }

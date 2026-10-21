@@ -37,6 +37,12 @@ function contentParts(parts: LlmContentPart[], textType: "input_text" | "output_
   for (const part of parts) {
     if (part.type === "text") {
       if (part.text) content.push({ type: textType, text: part.text });
+    } else if (part.type === "document") {
+      content.push({
+        type: "input_file",
+        filename: part.filename,
+        file_data: `data:${part.mediaType};base64,${part.dataBase64}`,
+      });
     } else {
       content.push({
         type: "input_image",

@@ -5,6 +5,8 @@ use super::{ContentPart, ProjectedContent, ProjectedMessage, PromptSpec};
 const TOKENS_PER_MESSAGE_OVERHEAD: u64 = 8;
 const TOKENS_PER_TOOL_CALL_OVERHEAD: u64 = 6;
 const TOKENS_PER_IMAGE: u64 = 1_024;
+const TOKENS_PER_DOCUMENT_BASE: u64 = 1_024;
+const BYTES_PER_DOCUMENT_TOKEN: u64 = 100;
 
 pub(crate) fn estimate_context_tokens(prompt: &PromptSpec, messages: &[ProjectedMessage]) -> u64 {
     let instructions = estimate_text_tokens(&prompt.instructions);
@@ -71,6 +73,14 @@ fn estimate_parts_tokens(parts: &[ContentPart]) -> u64 {
             ContentPart::Image { mime_type, .. } => {
                 TOKENS_PER_IMAGE.saturating_add(estimate_text_tokens(mime_type))
             }
+            ContentPart::Document {
+                mime_type,
+                filename,
+                data,
+            } => TOKENS_PER_DOCUMENT_BASE
+                .saturating_add(estimate_text_tokens(mime_type))
+                .saturating_add(estimate_text_tokens(filename))
+                .saturating_add(data.len() as u64 / BYTES_PER_DOCUMENT_TOKEN),
         };
         total.saturating_add(tokens)
     })
