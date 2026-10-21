@@ -68,6 +68,15 @@ pub struct SetEnabled {
     pub enabled: bool,
 }
 
+/// Whether enabling takeover may terminate a running Cursor process.
+#[derive(Clone, Copy)]
+enum CursorRestart {
+    /// The user explicitly turned takeover on.
+    Terminate,
+    /// Takeover is restored from persisted state (app start, status polling).
+    Keep,
+}
+
 #[derive(Clone)]
 pub struct CursorHarness {
     inner: Arc<Inner>,
@@ -117,7 +126,8 @@ impl CursorHarness {
             && matches!(ca, CaState::Ready)
             && self.inner.backend_addr.read().is_some()
         {
-            self.enable().await?;
+            // Restoring a persisted takeover must never touch a running Cursor.
+            self.enable(CursorRestart::Keep).await?;
         }
         let proxy = self.inner.proxy.lock().await;
         let proxy_url = proxy.url();
@@ -155,7 +165,7 @@ impl CursorHarness {
     pub async fn set_enabled(&self, enabled: bool) -> Result<CursorHarnessStatus> {
         if enabled {
             self.inner.store.set_cursor_takeover_enabled(true).await?;
-            self.enable().await?;
+            self.enable(CursorRestart::Terminate).await?;
         } else {
             self.inner.store.set_cursor_takeover_enabled(false).await?;
             self.disable().await?;
@@ -169,7 +179,7 @@ impl CursorHarness {
         Ok(saved)
     }
 
-    async fn enable(&self) -> Result<()> {
+    async fn enable(&self, restart: CursorRestart) -> Result<()> {
         if !matches!(self.inner.ca.state()?, CaState::Ready) {
             return Err(Error::Config(
                 "initialize and trust the CA before enabling Cursor".into(),
@@ -187,7 +197,7 @@ impl CursorHarness {
             .map(settings::settings_match)
             .transpose()?
             .unwrap_or(false);
-        if !settings_applied {
+        if !settings_applied && matches!(restart, CursorRestart::Terminate) {
             // Terminating Cursor only makes the freshly written http.proxy take effect
             // sooner; it is optional, so a failed probe or kill must not block takeover.
             if let Err(error) = process::terminate_cursor().await {
