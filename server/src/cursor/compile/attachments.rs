@@ -70,7 +70,12 @@ fn image_mime_type(image: &pb::SelectedImage) -> Result<String> {
 enum Source<'a> {
     Data(&'a [u8]),
     BlobId(&'a [u8]),
-    BlobIdWithData { blob_id: &'a [u8], data: &'a [u8] },
+    BlobIdWithData {
+        blob_id: &'a [u8],
+        data: &'a [u8],
+    },
+    /// Agent-mode Cursor saves attachments under the workspace and sends only the local path.
+    LocalPath(&'a str),
 }
 
 fn image_source(image: &pb::SelectedImage) -> Result<Source<'_>> {
@@ -103,8 +108,9 @@ fn document_source(document: &pb::SelectedDocument) -> Result<Source<'_>> {
             "selected document {} was uploaded to Cursor and cannot be read locally",
             document_filename(document)
         ))),
+        None if !document.path.is_empty() => Ok(Source::LocalPath(&document.path)),
         None => Err(Error::Protocol(
-            "selected document is missing data_or_blob_id".into(),
+            "selected document is missing data_or_blob_id and path".into(),
         )),
     }
 }
@@ -120,6 +126,9 @@ async fn resolve(label: &str, source: Source<'_>, blobs: &BlobSynchronizer) -> R
                 .await?;
             data.to_vec()
         }
+        Source::LocalPath(path) => tokio::fs::read(path).await.map_err(|error| {
+            Error::Protocol(format!("cannot read selected {label} {path}: {error}"))
+        })?,
     };
     if data.is_empty() {
         return Err(Error::Protocol(format!("selected {label} data is empty")));
@@ -135,4 +144,34 @@ async fn fetch(label: &str, raw_id: &[u8], blobs: &BlobSynchronizer) -> Result<V
             id.to_base64()
         ))
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn document_without_payload_falls_back_to_local_path() {
+        let document = pb::SelectedDocument {
+            filename: "report.pdf".into(),
+            mime_type: PDF_MIME_TYPE.into(),
+            path: "/workspace/.cursor/attachments/report.pdf".into(),
+            ..Default::default()
+        };
+        assert!(matches!(
+            document_source(&document),
+            Ok(Source::LocalPath(
+                "/workspace/.cursor/attachments/report.pdf"
+            ))
+        ));
+    }
+
+    #[test]
+    fn document_without_payload_or_path_is_rejected() {
+        let document = pb::SelectedDocument {
+            mime_type: PDF_MIME_TYPE.into(),
+            ..Default::default()
+        };
+        assert!(document_source(&document).is_err());
+    }
 }
